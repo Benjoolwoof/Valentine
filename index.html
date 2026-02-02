@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Be My Valentine?</title>
+
   <style>
+    /* Page background + centering */
     body{
       margin:0;
       min-height:100vh;
@@ -14,6 +16,8 @@
       background: linear-gradient(135deg, #ffe3ec, #fff7fb);
       overflow:hidden;
     }
+
+    /* Main card */
     .card{
       width:min(520px, 92vw);
       padding:26px 20px;
@@ -22,17 +26,19 @@
       box-shadow: 0 18px 50px rgba(0,0,0,.12);
       text-align:center;
     }
-    h1{ margin:0 0 8px; font-size:clamp(26px, 4.5vw, 40px); }
-    p{ margin:0 0 16px; opacity:.8; }
 
-    /* IMPORTANT: arena must be position:relative */
+    h1{ margin:0 0 8px; font-size:clamp(26px, 4.5vw, 40px); }
+    p{ margin:0 0 10px; opacity:.8; }
+
+    /* Area where buttons can move */
     #arena{
-      position:relative;
+      position:relative; /* required for absolute button movement */
       height:190px;
-      margin-top:10px;
+      margin-top:6px;
       border-radius:18px;
     }
 
+    /* Shared button styles */
     button{
       position:absolute;
       border:0;
@@ -48,17 +54,27 @@
       white-space:nowrap;
     }
 
+    /* YES button */
     #yesBtn{
       background: linear-gradient(135deg, #ff4d8d, #ff7bb2);
       color:white;
     }
 
+    /* NO button */
     #noBtn{
       background:#fff;
       color:#444;
       border:1px solid rgba(0,0,0,.1);
     }
 
+    /* Attempts counter */
+    #attempts{
+      margin-top:6px;
+      font-size:13px;
+      opacity:.65;
+    }
+
+    /* Result shown after YES */
     #result{
       display:none;
       margin-top:14px;
@@ -75,11 +91,16 @@
     <h1>Will you be my valentine? 💖</h1>
     <p>Try clicking “no” 😈</p>
 
+    <!-- Button playground -->
     <div id="arena">
       <button id="yesBtn">YES 💘</button>
       <button id="noBtn">no 😶</button>
     </div>
 
+    <!-- Joke counter -->
+    <div id="attempts">Times you tried to say “no”: 0 😇</div>
+
+    <!-- Success message -->
     <div id="result">
       <div style="font-size:22px;">YAYYYYY 🥹💞</div>
       <div>Ok it’s official 😤✨</div>
@@ -87,21 +108,21 @@
   </div>
 
   <script>
+    /* Grab elements */
     const arena  = document.getElementById("arena");
     const yesBtn = document.getElementById("yesBtn");
     const noBtn  = document.getElementById("noBtn");
     const result = document.getElementById("result");
+    const attemptsEl = document.getElementById("attempts");
 
-    // If IDs are wrong, fail loudly with a helpful message
-    if (!arena || !yesBtn || !noBtn || !result) {
-      throw new Error("Missing element. Need #arena, #yesBtn, #noBtn, #result in the HTML.");
-    }
+    let attempts = 0;
+    const NEAR_DISTANCE = 110; // how close before NO runs away
 
-    const NEAR_DISTANCE = 50;
+    /* Small helpers */
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
-    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-    function rand(min, max) { return Math.random() * (max - min) + min; }
-
+    /* Check if two rectangles overlap */
     function overlaps(r1, r2) {
       return !(
         r1.right <= r2.left ||
@@ -111,7 +132,26 @@
       );
     }
 
-    // Start NO right next to YES, same "level"
+    /* Update the joke counter */
+    function updateAttempts() {
+      attempts++;
+
+      let msg;
+      if (attempts < 10) {
+        msg = "nice try 😌";
+      } else if (attempts < 100) {
+        msg = "still no 😭";
+      } else if (attempts < 1000) {
+        msg = "BRO GIVE UP 💀";
+      } else {
+        msg = "ok this is love 💘";
+      }
+
+      attemptsEl.textContent =
+        `Times you tried to say “no”: ${attempts} — ${msg}`;
+    }
+
+    /* Initial placement: YES and NO side-by-side */
     function placeButtonsSideBySide() {
       const a = arena.getBoundingClientRect();
       const gap = 14;
@@ -121,7 +161,11 @@
       const noW  = noBtn.offsetWidth;
 
       const totalW = yesW + gap + noW;
-      const startX = clamp((a.width - totalW) / 2, 10, Math.max(10, a.width - totalW - 10));
+      const startX = clamp(
+        (a.width - totalW) / 2,
+        10,
+        Math.max(10, a.width - totalW - 10)
+      );
 
       yesBtn.style.left = startX + "px";
       yesBtn.style.top  = y + "px";
@@ -130,44 +174,30 @@
       noBtn.style.top   = y + "px";
     }
 
-    // Move NO to a random spot that DOES NOT overlap YES
+    /* Move NO to a random spot that doesn't overlap YES */
     function moveNoButton() {
       const a = arena.getBoundingClientRect();
-
-      // Make sure we don't go negative if arena is small
       const padding = 10;
+
       const maxX = Math.max(padding, a.width  - noBtn.offsetWidth  - padding);
       const maxY = Math.max(30,      a.height - noBtn.offsetHeight - padding);
 
-      // Try a bunch of positions until it's not on top of YES
-      for (let attempts = 0; attempts < 60; attempts++) {
+      for (let i = 0; i < 60; i++) {
         const x = rand(padding, maxX);
         const y = rand(30, maxY);
 
         noBtn.style.left = x + "px";
         noBtn.style.top  = y + "px";
 
-        const noRect  = noBtn.getBoundingClientRect();
-        const yesRect = yesBtn.getBoundingClientRect(); // recompute (safe)
-
-        if (!overlaps(noRect, yesRect)) return;
+        if (!overlaps(noBtn.getBoundingClientRect(),
+                      yesBtn.getBoundingClientRect())) {
+          updateAttempts();
+          return;
+        }
       }
-
-      // Fallback: if we somehow can't find a spot, put it far away horizontally
-      const yesRect = yesBtn.getBoundingClientRect();
-      const arenaRect = arena.getBoundingClientRect();
-      const leftSide = 10;
-      const rightSide = Math.max(10, arenaRect.width - noBtn.offsetWidth - 10);
-
-      // choose the side farther from YES
-      const yesCenterX = yesRect.left + yesRect.width / 2;
-      const arenaCenterX = arenaRect.left + arenaRect.width / 2;
-      const x = (yesCenterX > arenaCenterX) ? leftSide : rightSide;
-
-      noBtn.style.left = x + "px";
-      noBtn.style.top  = "30px";
     }
 
+    /* Run away if cursor/finger gets close */
     function maybeRun(e) {
       const b = noBtn.getBoundingClientRect();
       const cx = b.left + b.width / 2;
@@ -182,23 +212,27 @@
       }
     }
 
+    /* Mouse + touch support */
     arena.addEventListener("pointermove", maybeRun);
 
-    // On iPhone/touch: if they try to tap NO, it escapes
+    /* Prevent NO from ever being clicked */
     noBtn.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       moveNoButton();
     });
 
+    /* YES button behavior */
     yesBtn.addEventListener("click", () => {
       result.style.display = "block";
       noBtn.textContent = "too late 😌";
       noBtn.style.opacity = "0.6";
     });
 
-    // Layout after buttons have real widths
+    /* Initial layout + keep centered on resize */
     requestAnimationFrame(placeButtonsSideBySide);
-    window.addEventListener("resize", () => requestAnimationFrame(placeButtonsSideBySide));
+    window.addEventListener("resize", () =>
+      requestAnimationFrame(placeButtonsSideBySide)
+    );
   </script>
 </body>
 </html>
