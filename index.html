@@ -29,7 +29,7 @@
 
     .arena{
       position:relative;
-      height:170px;
+      height:190px;
       margin-top:10px;
       border-radius:18px;
     }
@@ -46,21 +46,18 @@
       -webkit-tap-highlight-color: transparent;
       box-shadow: 0 10px 22px rgba(0,0,0,.12);
       touch-action: manipulation;
+      white-space:nowrap;
     }
 
     #yesBtn{
       background: linear-gradient(135deg, #ff4d8d, #ff7bb2);
       color:white;
-      left: 120px;
-      top: 60px;
     }
 
     #noBtn{
       background:#fff;
       color:#444;
       border:1px solid rgba(0,0,0,.1);
-      left: 300px;
-      top: 60px;
     }
 
     #result{
@@ -77,7 +74,7 @@
 <body>
   <div class="card">
     <h1>Will you be my valentine? 💖</h1>
-    <p>Try pressing “no” 😈</p>
+    <p>Try clicking “no” 😈</p>
 
     <div class="arena" id="arena">
       <button id="yesBtn">YES 💘</button>
@@ -91,13 +88,38 @@
   </div>
 
   <script>
-    const arena = document.getElementById("arena");
-    const noBtn = document.getElementById("noBtn");
+    const arena  = document.getElementById("arena");
+    const noBtn  = document.getElementById("noBtn");
     const yesBtn = document.getElementById("yesBtn");
     const result = document.getElementById("result");
 
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
     function rand(min, max){ return Math.random() * (max - min) + min; }
 
+    // Put YES and NO side-by-side on the same line at the start
+    function placeButtonsSideBySide() {
+      const a = arena.getBoundingClientRect();
+
+      const padding = 12;
+      const gap = 14;
+
+      // Measure button widths after render
+      const yesW = yesBtn.offsetWidth;
+      const noW  = noBtn.offsetWidth;
+
+      const totalW = yesW + gap + noW;
+      const startX = clamp((a.width - totalW) / 2, padding, a.width - totalW - padding);
+
+      const y = 70; // "level" height (same top)
+
+      yesBtn.style.left = startX + "px";
+      yesBtn.style.top  = y + "px";
+
+      noBtn.style.left  = (startX + yesW + gap) + "px";
+      noBtn.style.top   = y + "px";
+    }
+
+    // Move NO somewhere random inside arena
     function moveNoButton() {
       const a = arena.getBoundingClientRect();
       const b = noBtn.getBoundingClientRect();
@@ -106,14 +128,17 @@
       const maxX = a.width - b.width - padding;
       const maxY = a.height - b.height - padding;
 
+      // Keep it mostly in the middle-ish vertically so it doesn't go behind text
       const x = rand(padding, Math.max(padding, maxX));
-      const y = rand(padding, Math.max(padding, maxY));
+      const y = rand(30, Math.max(30, maxY));
 
       noBtn.style.left = x + "px";
       noBtn.style.top  = y + "px";
     }
 
-    // Desktop + mobile: if your finger/mouse gets close, it runs.
+    // If cursor/finger gets close to NO, it runs away
+    const NEAR_DISTANCE = 110;
+
     function maybeRun(e){
       const b = noBtn.getBoundingClientRect();
       const cx = b.left + b.width/2;
@@ -123,17 +148,14 @@
       const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
       if (clientX == null || clientY == null) return;
 
-      const dx = clientX - cx;
-      const dy = clientY - cy;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist < 110) moveNoButton();
+      const dist = Math.hypot(clientX - cx, clientY - cy);
+      if (dist < NEAR_DISTANCE) moveNoButton();
     }
 
-    // Pointer events cover mouse + touch on most devices
+    // Desktop + touch move
     arena.addEventListener("pointermove", maybeRun);
 
-    // If they actually try to tap/click NO, force move
+    // iPhone: if they try to tap NO, it escapes
     noBtn.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       moveNoButton();
@@ -145,8 +167,12 @@
       noBtn.style.opacity = "0.6";
     });
 
-    // Put the NO somewhere random when page loads
-    moveNoButton();
+    // Start positions
+    // (wait one frame so button widths are measured correctly)
+    requestAnimationFrame(placeButtonsSideBySide);
+
+    // Keep them centered if screen size changes
+    window.addEventListener("resize", () => requestAnimationFrame(placeButtonsSideBySide));
   </script>
 </body>
 </html>
