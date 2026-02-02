@@ -113,7 +113,7 @@
     const attemptsEl = document.getElementById("attempts");
 
     let attempts = 0;
-    const NEAR_DISTANCE = 110; // how close before NO runs away
+    const NEAR_DISTANCE = 40; // how close before NO runs away
 
     /* Small helpers */
     function rand(min, max){ return Math.random() * (max - min) + min; }
@@ -138,7 +138,7 @@
         msg = "nice try 😌";
       } else if (attempts < 100) {
         msg = "still no 😭";
-      } else if (attempts < 1000) {
+      } else if (attempts < 500) {
         msg = "BRO GIVE UP 💀";
       } else {
         msg = "ok this is love 💘";
