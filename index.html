@@ -65,4 +65,88 @@
 
     #result{
       display:none;
-      margin-top:1
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:#fff4f8;
+      border:1px dashed rgba(255,77,141,.45);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Will you be my valentine? 💖</h1>
+    <p>Try pressing “no” 😈</p>
+
+    <div class="arena" id="arena">
+      <button id="yesBtn">YES 💘</button>
+      <button id="noBtn">no 😶</button>
+    </div>
+
+    <div id="result">
+      <div style="font-size:22px;">YAYYYYY 🥹💞</div>
+      <div>Ok it’s official 😤✨</div>
+    </div>
+  </div>
+
+  <script>
+    const arena = document.getElementById("arena");
+    const noBtn = document.getElementById("noBtn");
+    const yesBtn = document.getElementById("yesBtn");
+    const result = document.getElementById("result");
+
+    function rand(min, max){ return Math.random() * (max - min) + min; }
+
+    function moveNoButton() {
+      const a = arena.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+
+      const padding = 10;
+      const maxX = a.width - b.width - padding;
+      const maxY = a.height - b.height - padding;
+
+      const x = rand(padding, Math.max(padding, maxX));
+      const y = rand(padding, Math.max(padding, maxY));
+
+      noBtn.style.left = x + "px";
+      noBtn.style.top  = y + "px";
+    }
+
+    // Desktop + mobile: if your finger/mouse gets close, it runs.
+    function maybeRun(e){
+      const b = noBtn.getBoundingClientRect();
+      const cx = b.left + b.width/2;
+      const cy = b.top  + b.height/2;
+
+      const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
+      if (clientX == null || clientY == null) return;
+
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist < 110) moveNoButton();
+    }
+
+    // Pointer events cover mouse + touch on most devices
+    arena.addEventListener("pointermove", maybeRun);
+
+    // If they actually try to tap/click NO, force move
+    noBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      moveNoButton();
+    });
+
+    yesBtn.addEventListener("click", () => {
+      result.style.display = "block";
+      noBtn.textContent = "too late 😌";
+      noBtn.style.opacity = "0.6";
+    });
+
+    // Put the NO somewhere random when page loads
+    moveNoButton();
+  </script>
+</body>
+</html>
