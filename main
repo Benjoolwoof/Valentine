@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Be My Valentine?</title>
+  <style>
+    :root{
+      --bg1:#ffe3ec;
+      --bg2:#fff7fb;
+      --card:#ffffffcc;
+      --text:#2b2b2b;
+      --pink:#ff4d8d;
+      --pink2:#ff7bb2;
+      --shadow: 0 18px 50px rgba(0,0,0,.12);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% 20%, var(--bg2), transparent 60%),
+        radial-gradient(900px 600px at 80% 30%, #ffd1e2, transparent 60%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      overflow:hidden;
+    }
+
+    /* floating hearts */
+    .hearts span{
+      position:absolute;
+      bottom:-40px;
+      left:var(--x);
+      font-size:var(--s);
+      opacity:.75;
+      animation: floatUp var(--t) linear infinite;
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,.08));
+      user-select:none;
+      pointer-events:none;
+    }
+    @keyframes floatUp{
+      from { transform: translateY(0) translateX(0) rotate(0deg); }
+      to   { transform: translateY(-120vh) translateX(var(--drift)) rotate(22deg); }
+    }
+
+    .card{
+      width:min(520px, 92vw);
+      padding:28px 22px;
+      border-radius:26px;
+      background:var(--card);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.7);
+      position:relative;
+      text-align:center;
+    }
+
+    h1{
+      margin:4px 0 10px;
+      font-size: clamp(26px, 4.4vw, 42px);
+      letter-spacing:.2px;
+    }
+
+    p{
+      margin: 0 0 18px;
+      opacity:.85;
+      font-size: clamp(14px, 2.6vw, 17px);
+    }
+
+    .buttons-area{
+      position:relative;
+      height: 160px;  /* space for the runaway button */
+      margin-top: 8px;
+    }
+
+    button{
+      border:0;
+      padding: 14px 20px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 16px;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,.12);
+      transition: transform .12s ease, filter .12s ease;
+      -webkit-tap-highlight-color: transparent;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    button:active{ transform: scale(.98); }
+
+    #yesBtn{
+      background: linear-gradient(135deg, var(--pink), var(--pink2));
+      color:white;
+      position:absolute;
+      left: 50%;
+      top: 40px;
+      transform: translateX(-115%);
+    }
+    #yesBtn:hover{ filter: brightness(1.03); transform: translateX(-115%) scale(1.03); }
+
+    #noBtn{
+      background: #ffffff;
+      color:#444;
+      position:absolute;
+      left: 50%;
+      top: 40px;
+      transform: translateX(15%);
+      border: 1px solid rgba(0,0,0,.08);
+    }
+    #noBtn:hover{ transform: translateX(15%) scale(1.03); }
+
+    .result{
+      display:none;
+      margin-top: 10px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.7);
+      border: 1px dashed rgba(255,77,141,.35);
+    }
+    .result strong{ color: var(--pink); }
+
+    .tiny{
+      margin-top: 14px;
+      font-size: 12px;
+      opacity:.6;
+    }
+
+    /* confetti */
+    .confetti{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+      border-radius:26px;
+    }
+    .confetti i{
+      position:absolute;
+      top:-12px;
+      width:10px;
+      height:14px;
+      border-radius:3px;
+      opacity:.95;
+      animation: confettiFall 1.6s ease-in forwards;
+    }
+    @keyframes confettiFall{
+      to{
+        transform: translateY(220px) rotate(420deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="hearts" aria-hidden="true"></div>
+
+  <main class="card" id="card">
+    <h1>Will you be my valentine? 💖</h1>
+    <p>There is only one correct answer… 😌</p>
+
+    <div class="buttons-area" id="arena">
+      <button id="yesBtn">YES!!! 💘</button>
+      <button id="noBtn">no 😶</button>
+    </div>
+
+    <div class="result" id="result">
+      <div style="font-size:22px;">YAYYYYY 🥹💞</div>
+      <div>Ok cool so… it’s official: <strong>we’re valentines</strong> 😤✨</div>
+    </div>
+
+    <div class="tiny">Tip: try to click “no” 😈</div>
+
+    <div class="confetti" id="confetti"></div>
+  </main>
+
+  <script>
+    // ---------- floating background hearts ----------
+    const hearts = document.querySelector(".hearts");
+    const heartChars = ["💗","💖","💘","💝","💕"];
+    for (let i = 0; i < 18; i++) {
+      const s = document.createElement("span");
+      s.textContent = heartChars[Math.floor(Math.random()*heartChars.length)];
+      s.style.setProperty("--x", Math.floor(Math.random()*100) + "vw");
+      s.style.setProperty("--s", (12 + Math.random()*20) + "px");
+      s.style.setProperty("--t", (7 + Math.random()*10) + "s");
+      s.style.setProperty("--drift", (Math.random()*120 - 60) + "px");
+      s.style.animationDelay = (-Math.random()*12) + "s";
+      hearts.appendChild(s);
+    }
+
+    // ---------- runaway button logic ----------
+    const arena = document.getElementById("arena");
+    const noBtn  = document.getElementById("noBtn");
+    const yesBtn = document.getElementById("yesBtn");
+    const result = document.getElementById("result");
+    const confettiLayer = document.getElementById("confetti");
+
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function moveNoButton() {
+      const aRect = arena.getBoundingClientRect();
+      const bRect = noBtn.getBoundingClientRect();
+
+      const padding = 10;
+      const maxX = aRect.width - bRect.width - padding;
+      const maxY = aRect.height - bRect.height - padding;
+
+      // Random but biased away from current position to feel "dodgy"
+      const currentLeft = noBtn.offsetLeft;
+      const currentTop  = noBtn.offsetTop;
+
+      let x = Math.random() * maxX;
+      let y = Math.random() * maxY;
+
+      // If it didn't move much, push it farther
+      if (Math.abs(x - currentLeft) < 80) x = clamp(x + (x < currentLeft ? -120 : 120), padding, maxX);
+      if (Math.abs(y - currentTop)  < 60) y = clamp(y + (y < currentTop  ? -90  : 90),  padding, maxY);
+
+      noBtn.style.left = x + "px";
+      noBtn.style.top  = y + "px";
+      noBtn.style.transform = "none";
+    }
+
+    // Set initial absolute positioning inside arena
+    function initPositions(){
+      // place YES nicely left-ish, NO right-ish
+      yesBtn.style.left = "50%";
+      yesBtn.style.top  = "40px";
+      yesBtn.style.transform = "translateX(-115%)";
+
+      noBtn.style.left  = "50%";
+      noBtn.style.top   = "40px";
+      noBtn.style.transform = "translateX(15%)";
+    }
+    initPositions();
+
+    // Mouse: move away when cursor gets near
+    const NEAR_DISTANCE = 90; // px
+    arena.addEventListener("mousemove", (e) => {
+      const b = noBtn.getBoundingClientRect();
+      const cx = b.left + b.width/2;
+      const cy = b.top  + b.height/2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const dist = Math.hypot(dx, dy);
+      if (dist < NEAR_DISTANCE) moveNoButton();
+    });
+
+    // Touch/mobile: if you try to tap/click NO, it escapes
+    // Use pointerdown so it fires before click is fully committed
+    noBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();  // stops "click" from activating
+      moveNoButton();
+    });
+
+    // Also if it somehow gets clicked, still move it (extra safety)
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      moveNoButton();
+    });
+
+    // YES button: show result + confetti
+    function popConfetti(){
+      const colors = ["#ff4d8d","#ff7bb2","#ffd166","#8ecae6","#cdb4db","#b8f2e6"];
+      const count = 40;
+      const rect = arena.getBoundingClientRect();
+
+      for (let i=0; i<count; i++){
+        const p = document.createElement("i");
+        p.style.left = (Math.random()*rect.width) + "px";
+        p.style.background = colors[Math.floor(Math.random()*colors.length)];
+        p.style.transform = `translateY(0) rotate(${Math.random()*180}deg)`;
+        p.style.animationDuration = (1.1 + Math.random()*1.0) + "s";
+        p.style.width = (7 + Math.random()*8) + "px";
+        p.style.height = (9 + Math.random()*10) + "px";
+        confettiLayer.appendChild(p);
+        setTimeout(()=>p.remove(), 2200);
+      }
+    }
+
+    yesBtn.addEventListener("click", () => {
+      result.style.display = "block";
+      popConfetti();
+      // Disable the NO button for extra comedic effect (optional)
+      noBtn.textContent = "too late 😌";
+      noBtn.style.opacity = "0.6";
+    });
+
+    // If the window resizes, re-init so transforms don't look weird
+    window.addEventListener("resize", () => {
+      initPositions();
+    });
+  </script>
+</body>
+</html>
